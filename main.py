@@ -88,17 +88,20 @@ def get_product_data(url):
         # Инициализируем переменную availability
         availability = "Не указано"
 
-        # Извлекаем наличие товара для магазина "Челябинск Свердловский пр.35а"
-        store_item_element = soup.find('div', class_='product-inner__item')
-
-        if store_item_element:
-            text_element = store_item_element.find('div', class_='product-inner__text')
+        # Извлекаем информацию о наличии товара
+        store_item_el = soup.find('div', class_='product-inner__item')
+        if store_item_el:
+            store_item_element = store_item_el.find('div', class_='product-inner__name')
+            text_element = store_item_el.find('div', class_='product-inner__text')
             if text_element:
-                availability_text = text_element.text.strip()
-                if "есть" in availability_text.lower():  # Пример проверки наличия
+                availability_text = text_element.text.strip().lower()
+                # Проверяем наличие товара
+                if "есть" in availability_text:
                     availability = "В наличии"
-                else:
+                elif "нет" in availability_text:
                     availability = "Нет в наличии"
+                else:
+                    availability = "Статус наличия не определен"
 
         # Возвращаем данные в виде словаря
         return {
