@@ -59,16 +59,6 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def get_product_data(url):
-    """
-    Извлекает название, цену и количество товара со страницы товара.
-
-    Args:
-        url (str): URL страницы товара.
-
-    Returns:
-        dict: Словарь с названием, ценой и количеством товара.
-              Возвращает None, если не удается получить данные.
-    """
     try:
         # Отправляем GET-запрос на URL
         response = requests.get(url)
@@ -89,7 +79,8 @@ def get_product_data(url):
         availability = "Не указано"
 
         # Извлекаем информацию о наличии товара
-        store_item_el = soup.find('div', class_='product-inner__item')
+        store_item_e = soup.find('div',class_='product-inner__list')
+        store_item_el = store_item_e.find('div', class_='product-inner__item')
         if store_item_el:
             store_item_element = store_item_el.find('div', class_='product-inner__name')
             text_element = store_item_el.find('div', class_='product-inner__text')
