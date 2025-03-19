@@ -29,8 +29,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка команды /start"""
     keyboard = [
         [
-            InlineKeyboardButton("Получить данные из strikeplanet", callback_data='get_data1'),
-            InlineKeyboardButton("Получить данные из apostol", callback_data='get_data2'),
+            InlineKeyboardButton("strikeplanet", callback_data='get_data1'),
+            InlineKeyboardButton("apostol", callback_data='get_data2'),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
