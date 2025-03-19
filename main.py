@@ -59,6 +59,16 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def get_product_data(url):
+    """
+    Извлекает название, цену и количество товара со страницы товара.
+
+    Args:
+        url (str): URL страницы товара.
+
+    Returns:
+        dict: Словарь с названием, ценой и количеством товара.
+              Возвращает None, если не удается получить данные.
+    """
     try:
         # Отправляем GET-запрос на URL
         response = requests.get(url)
@@ -68,8 +78,8 @@ def get_product_data(url):
         soup = BeautifulSoup(response.content, 'html.parser')
 
         # Извлекаем название товара
-        name_element = soup.find('div', class_='title-block__title').find('h1')
-        name = name_element.text.strip() if name_element else "Название не указано"
+        name_element = soup.find('div', class_='title-block__title')
+        name = name_element.find('h1').text.strip() if name_element and name_element.find('h1') else "Название не указано"
 
         # Извлекаем цену товара
         price_element = soup.find('div', class_='price')
@@ -79,20 +89,21 @@ def get_product_data(url):
         availability = "Не указано"
 
         # Извлекаем информацию о наличии товара
-        store_item_e = soup.find('div',class_='product-inner__list')
-        store_item_el = store_item_e.find('div', class_='product-inner__item')
-        if store_item_el:
-            store_item_element = store_item_el.find('div', class_='product-inner__name')
-            text_element = store_item_el.find('div', class_='product-inner__text')
-            if text_element:
-                availability_text = text_element.text.strip().lower()
-                # Проверяем наличие товара
-                if "есть" in availability_text:
-                    availability = "В наличии"
-                elif "нет" in availability_text:
-                    availability = "Нет в наличии"
-                else:
-                    availability = "Статус наличия не определен"
+        store_item_e = soup.find('div', class_='product-inner__list')
+        if store_item_e:
+            store_item_el = store_item_e.find('div', class_='product-inner__item')
+            if store_item_el:
+                text_element = store_item_el.find('div', class_='product-inner__text')
+                if text_element:
+                    availability_text = text_element.text.strip().lower()
+
+                    # Проверяем наличие товара
+                    if "есть" in availability_text:
+                        availability = "В наличии"
+                    elif "нет" in availability_text:
+                        availability = "Нет в наличии"
+                    else:
+                        availability = "Статус наличия не определен"
 
         # Возвращаем данные в виде словаря
         return {
