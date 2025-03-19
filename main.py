@@ -85,13 +85,20 @@ def get_product_data(url):
         price_element = soup.find('div', class_='price')
         price = price_element.text.strip() if price_element else "Цена не указана"
 
+        # Инициализируем переменную availability
+        availability = "Не указано"
+
         # Извлекаем наличие товара для магазина "Челябинск Свердловский пр.35а"
-        availability = "Нет в наличии"  # Значение по умолчанию
         store_item_element = soup.find('div', class_='product-inner__item')
 
-        if store_item_element and "Челябинск Свердловский пр.35а" in store_item_element.text:
+        if store_item_element:
             text_element = store_item_element.find('div', class_='product-inner__text')
-            availability = text_element.text.strip() if text_element else "Нет в наличии"
+            if text_element:
+                availability_text = text_element.text.strip()
+                if "есть" in availability_text.lower():  # Пример проверки наличия
+                    availability = "В наличии"
+                else:
+                    availability = "Нет в наличии"
 
         # Возвращаем данные в виде словаря
         return {
