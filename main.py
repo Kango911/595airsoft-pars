@@ -30,9 +30,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка команды /start"""
     keyboard = [
         [
-            InlineKeyboardButton("Получить данные из strikeplanet", callback_data='get_data1'),
-            InlineKeyboardButton("Получить данные из apostol", callback_data='get_data2'),
-            InlineKeyboardButton("Получить данные из airsoft-rus", callback_data='get_data3'),
+            InlineKeyboardButton("strikeplanet", callback_data='get_data1'),
+            InlineKeyboardButton("apostol", callback_data='get_data2'),
+            InlineKeyboardButton("airsoft-rus", callback_data='get_data3'),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -116,7 +116,8 @@ def extract_strikeplanet_data(soup):
         if store_item_el:
             text_element = store_item_el.find('div', class_='product-inner__text')
             if text_element:
-                availability = text_element.text.strip() if text_element else "Не в наличии"
+                availability_text = text_element.text.strip().lower()
+                availability = "В наличии" if "есть" in availability_text else "Нет в наличии" if "нет" in availability_text else "Статус наличия не определен"
 
     return {'name': name, 'price': price, 'availability': availability}
 
