@@ -60,7 +60,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         product_data = get_product_data_generic(url, parser)
 
         if product_data:
-            message = f"Название: {product_data['name']}\nЦена: {product_data['price']}\nВ наличии: {product_data['availability']}"
+            message = f"Сайт: {product_data['sait']}\nНазвание: {product_data['name']}\nЦена: {product_data['price']}\nВ наличии: {product_data['availability']}"
             messages.append(message)
         else:
             messages.append(f"Не удалось получить данные о товаре с URL: {url}")
@@ -103,6 +103,7 @@ def get_product_data_generic(url, parser):
 
 def extract_strikeplanet_data(soup):
     """Извлекает данные из страницы strikeplanet."""
+    sait = "Strikeplanet"
     name_element = soup.find('div', class_='title-block__title')
     name = name_element.find('h1').text.strip() if name_element and name_element.find('h1') else "Название не указано"
 
@@ -119,11 +120,12 @@ def extract_strikeplanet_data(soup):
                 availability_text = text_element.text.strip().lower()
                 availability = "В наличии" if "есть" in availability_text else "Нет в наличии" if "нет" in availability_text else "Статус наличия не определен"
 
-    return {'name': name, 'price': price, 'availability': availability}
+    return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
 
 def extract_apostol_data(soup):
     """Извлекает данные из страницы apostol."""
+    sait = "Apostol"
     name_element = soup.find('div', class_='t-store__prod-popup__title-wrapper')
     name = name_element.find('h1',
                              class_='js-store-prod-name js-product-name t-store__prod-popup__name t-name t-name_xl').text.strip() if name_element and name_element.find(
@@ -142,11 +144,12 @@ def extract_apostol_data(soup):
                 availability_text = text_element.text.strip().lower()
                 availability = "В наличии" if "есть" in availability_text else "Нет в наличии" if "нет" in availability_text else "Статус наличия не определен"
 
-    return {'name': name, 'price': price, 'availability': availability}
+    return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
 
 def extract_airsoft_rus_data(soup):
     """Извлекает данные из страницы airsoft-rus."""
+    sait = "Airsoft-rus"
     name_element = soup.find('div', id='content')
     name = name_element.find('h1').text.strip() if name_element and name_element.find('h1') else "Название не указано"
 
@@ -156,7 +159,7 @@ def extract_airsoft_rus_data(soup):
     store_item_e = soup.find('p', class_='in_stock')
     availability = store_item_e.text.strip() if store_item_e else "Не в наличии"
 
-    return {'name': name, 'price': price, 'availability': availability}
+    return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
 
 def main():
@@ -171,5 +174,8 @@ def main():
 
 if __name__ == '__main__':
     main()  # Запускаем основную функцию
+
+
+
 
 
