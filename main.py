@@ -4,9 +4,10 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+from datetime import datetime  # Импортируем datetime для работы с датой
 from key import TOKENN
 
-# Ваши данные для Telegram-бота
 TOKEN = TOKENN
 
 # Настройка логирования
@@ -30,13 +31,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка команды /start"""
     keyboard = [
         [
-            InlineKeyboardButton("strikeplanet", callback_data='get_data1'),
-            InlineKeyboardButton("apostol", callback_data='get_data2'),
-            InlineKeyboardButton("airsoft-rus", callback_data='get_data3'),
+            InlineKeyboardButton("Strikeplanet", callback_data='get_data1'),
+            InlineKeyboardButton("Apostol", callback_data='get_data2'),
+            InlineKeyboardButton("Airsoft-rus", callback_data='get_data3'),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text='Выберите источник данных:',
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text='Выберите источник данных:',
                                    reply_markup=reply_markup)
 
 
@@ -45,28 +47,50 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    messages = []
-    if query.data == 'get_data1':
-        urls = urls1
-        parser = "strikeplanet"
-    elif query.data == 'get_data2':
-        urls = urls2
-        parser = "apostol"
-    elif query.data == 'get_data3':
-        urls = urls3
-        parser = "airsoft-rus"
+    data_to_save = []
+
+    # Словарь для сопоставления кнопки и источника данных
+    source_map = {
+        'get_data1': (urls1, "strikeplanet"),
+        'get_data2': (urls2, "apostol"),
+        'get_data3': (urls3, "airsoft-rus"),
+    }
+
+    urls, parser = source_map.get(query.data, ([], "unknown"))
+
+    if not urls:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Неизвестный источник данных.")
+        return
 
     for url in urls:
         product_data = get_product_data_generic(url, parser)
 
         if product_data:
-            message = f"Сайт: {product_data['sait']}\nНазвание: {product_data['name']}\nЦена: {product_data['price']}\nВ наличии: {product_data['availability']}"
-            messages.append(message)
+            # Добавляем URL к данным о продукте
+            product_data['url'] = url  # Добавляем новый столбец с URL
+            data_to_save.append(product_data)
         else:
-            messages.append(f"Не удалось получить данные о товаре с URL: {url}")
+            logging.error(f"Не удалось получить данные о товаре с URL: {url}")
 
-    # Отправляем все сообщения
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="\n\n".join(messages))
+    if data_to_save:  # Проверка на пустой список
+        df = pd.DataFrame(data_to_save)
+
+        # Получаем текущую дату
+        current_date = datetime.now().strftime('%Y-%m-%d')  # Формат "ГГГГ-ММ-ДД"
+
+        # Создаем имя файла с датой
+        excel_filename = f'{parser}_{current_date}.xlsx'  # Используем parser для имени файла
+
+        df.to_excel(excel_filename, index=False)
+
+        # Отправка файла пользователю
+        with open(excel_filename, 'rb') as document:
+            await context.bot.send_document(chat_id=update.effective_chat.id, document=document)
+
+        logging.info(f"Данные успешно сохранены и отправлены в файл {excel_filename}")
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Нет данных для сохранения.")
 
 
 def get_product_data_generic(url, parser):
@@ -118,7 +142,9 @@ def extract_strikeplanet_data(soup):
             text_element = store_item_el.find('div', class_='product-inner__text')
             if text_element:
                 availability_text = text_element.text.strip().lower()
-                availability = "В наличии" if "есть" in availability_text else "Нет в наличии" if "нет" in availability_text else "Статус наличия не определен"
+                availability = ("В наличии" if "есть" in availability_text
+                                else "Нет в наличии" if "нет" in availability_text
+                else "Статус наличия не определен")
 
     return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
@@ -142,7 +168,9 @@ def extract_apostol_data(soup):
             text_element = store_item_el.find('div', class_='product-inner__text')
             if text_element:
                 availability_text = text_element.text.strip().lower()
-                availability = "В наличии" if "есть" in availability_text else "Нет в наличии" if "нет" in availability_text else "Статус наличия не определен"
+                availability = ("В наличии" if "есть" in availability_text
+                                else "Нет в наличии" if "нет" in availability_text
+                else "Статус наличия не определен")
 
     return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
@@ -157,7 +185,7 @@ def extract_airsoft_rus_data(soup):
     price = price_element.text.strip() if price_element else "Цена не указана"
 
     store_item_e = soup.find('p', class_='in_stock')
-    availability = store_item_e.text.strip() if store_item_e else "Не в наличии"
+    availability = store_item_e.text.strip() if store_item_e else "Нет в наличии"
 
     return {'sait': sait, 'name': name, 'price': price, 'availability': availability}
 
@@ -174,8 +202,5 @@ def main():
 
 if __name__ == '__main__':
     main()  # Запускаем основную функцию
-
-
-
 
 
